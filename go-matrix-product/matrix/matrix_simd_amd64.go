@@ -7,6 +7,9 @@ import (
 	"simd/archsimd"
 )
 
+// SIMDAMD64Product multiplies a and b using AVX2 SIMD.
+//
+// It panics if a.size is not equal to b.size.
 func SIMDAMD64Product(a Matrix, b Matrix) Matrix {
 	size := a.size
 	if size != b.size {

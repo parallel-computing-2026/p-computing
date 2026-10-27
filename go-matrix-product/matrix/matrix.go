@@ -5,11 +5,14 @@ import (
 	"math/rand"
 )
 
+// Matrix is a square matrix of float values.
 type Matrix struct {
 	data []float32
 	size int
 }
 
+// NewRandomMatrix generates a random matrix of size nXn
+// with values in range of [0; 10).
 func NewRandomMatrix(n int, seed int64) Matrix {
 	r := rand.New(rand.NewSource(seed))
 
@@ -27,6 +30,9 @@ func NewRandomMatrix(n int, seed int64) Matrix {
 	return matrix
 }
 
+// SimpleProduct multiplies a and b row by column 0(n^3).
+//
+// It panics if a.size is not equal to b.size.
 func SimpleProduct(a Matrix, b Matrix) Matrix {
 	size := a.size
 	if size != b.size {

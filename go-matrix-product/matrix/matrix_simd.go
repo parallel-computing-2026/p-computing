@@ -7,6 +7,10 @@ import (
 	"simd"
 )
 
+// SIMDProduct multiplies a and b using portable SIMD.
+// It fallbacks to SimpleProduct if SIMD is emulated.
+//
+// It panics if a.size is not equal to b.size.
 func SIMDProduct(a Matrix, b Matrix) Matrix {
 	size := a.size
 	if size != b.size {
