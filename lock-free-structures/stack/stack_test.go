@@ -4,71 +4,61 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+
+	"github.com/parallel-computing-2026/p-computing/lock-free-structures/internal"
 )
 
-func TestConcurrentWrites(t *testing.T) {
-	stack := NewLockFreeStack[int64]()
+const (
+	writers = 4
+	readers = 3
+	numbers = 10000
+	total   = writers * numbers
+)
 
-	const writers = 4
-	const numbers = 10000
-
-	var counter atomic.Int64
-	var wg sync.WaitGroup
-	for range writers {
+func push(stack *LockFreeStack[int], wg *sync.WaitGroup) {
+	for w := range writers {
 		wg.Go(func() {
-			for range numbers {
-				stack.Push(counter.Add(1) - 1)
+			for i := range numbers {
+				stack.Push(w*numbers + i)
 			}
 		})
-	}
-	wg.Wait()
-
-	values := make(map[int64]struct{}, numbers*writers)
-	for v, ok := stack.Pop(); ok; v, ok = stack.Pop() {
-		if _, ok := values[v]; ok {
-			t.Errorf("got duplicate value: %d", v)
-		}
-		values[v] = struct{}{}
-	}
-
-	if len(values) != numbers*writers {
-		t.Fatalf("got %d values, expected %d", len(values), numbers)
 	}
 }
 
-func TestConcurrentRW(t *testing.T) {
-	stack := NewLockFreeStack[int64]()
+func TestConcurrentWrites(t *testing.T) {
+	stack := NewLockFreeStack[int]()
 
-	const writers = 4
-	const readers = 3
-	const numbers = 10000
-
-	var writerCounter atomic.Int64
 	var wg sync.WaitGroup
-	for range writers {
-		wg.Go(func() {
-			for range numbers {
-				stack.Push(writerCounter.Add(1) - 1)
-			}
-		})
+	push(stack, &wg)
+	wg.Wait()
+
+	values := make([]int, 0, total)
+	for val, ok := stack.Pop(); ok; val, ok = stack.Pop() {
+		values = append(values, val)
 	}
 
-	var readerCounter atomic.Int64
-	for range readers {
+	internal.CheckExactlyOnce(t, [][]int{values}, total)
+}
+
+func TestConcurrentRW(t *testing.T) {
+	stack := NewLockFreeStack[int]()
+
+	var wg sync.WaitGroup
+	push(stack, &wg)
+
+	var count atomic.Int64
+	values := make([][]int, readers)
+	for r := range readers {
 		wg.Go(func() {
-			// can potentially be stuck in an endless loop
-			// prolly needs a timeout of some sort
-			for readerCounter.Load() < numbers*writers {
-				_, ok := stack.Pop()
-				if ok {
-					readerCounter.Add(1)
+			for count.Load() < total {
+				if val, ok := stack.Pop(); ok {
+					count.Add(1)
+					values[r] = append(values[r], val)
 				}
 			}
 		})
 	}
 	wg.Wait()
 
-	if readerCounter != writerCounter {
-		t.Errorf("got %d, want %d", readerCounter.Load(), writerCounter.Load())
-	}
+	internal.CheckExactlyOnce(t, values, total)
 }

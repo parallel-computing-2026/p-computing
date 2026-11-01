@@ -12,14 +12,14 @@ type node[T any] struct {
 // LockFreeStack is lock-free treiber stack based on a linked list.
 // Create with NewLockFreeStack.
 //
-// It is safe for concurrent use without.
+// It is safe for concurrent use.
 type LockFreeStack[T any] struct {
 	head atomic.Pointer[node[T]] // defaults to nil
 }
 
 // NewLockFreeStack initializes a new LockFreeStack of type T.
 //
-// It is safe for concurrent use without.
+// It is safe for concurrent use.
 func NewLockFreeStack[T any]() *LockFreeStack[T] {
 	return &LockFreeStack[T]{}
 }
