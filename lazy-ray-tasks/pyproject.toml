@@ -1,0 +1,8 @@
+[project]
+name = "lazy-ray-tasks"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "orjson>=3.13.0",
+    "ray>=2.60.0",
+]
